@@ -1,5 +1,3 @@
-from storage import save_expense,load_expense
-
 class Expense:
     def __init__(self,amount:int,category:str,desc: str,date:str):
         self.amount=amount
@@ -32,9 +30,3 @@ class Expense:
             date=data["date"],
         )
 
-class ExpenseManager:
-    def __init__(self):
-        self.expenses=load_expense()
-
-    def add_append(self,expense):
-        self.expenses.append(expense)

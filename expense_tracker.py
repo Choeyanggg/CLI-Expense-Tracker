@@ -1,12 +1,23 @@
-from expense import Expense, ExpenseManager
-from storage import save_expense,load_expense
+from expense import Expense
+from expense_manager import ExpenseManager
+from storage import save_expense
+from datetime import date
 import sys
 
 manager=ExpenseManager()
 
+categories = [
+    "Food",
+    "Transport",
+    "Shopping",
+    "Bills",
+    "Entertainment",
+    "Other"
+]
+
 def main():
     while True: # unless we choose the right option
-        options=[add_expense,list_expense,get_summary,Exit]
+        options = [add_expense, list_expense, get_summary, modify_expense, exit_program]
         for i,fun in enumerate(options):
             print(f"{i+1} {fun.__name__}")
         try: # exception handelling
@@ -18,19 +29,25 @@ def main():
         except ValueError:
             print("Invalid Option, try again")
     
-categories=["Food",
-        "Transport",
-        "Shopping",
-        "Bills",
-        "Entertainment",
-        "Other"
-    ]
-def category_choice():
+
+def category_choice(current=None):
     while True:
-        for i,category in enumerate(categories,start=1):
-                    print(f"{i}. {category}")
-        
-        choice=int(input("Enter choice no: "))-1
+        print("=======Categories=======")
+        for i, category in enumerate(categories, start=1):
+            print(f"{i}. {category}")
+        if current:
+            print("(Press Enter to keep current: " + current + ")")
+ 
+        raw = input("Enter choice no: ")
+        if current and raw.strip() == "":
+            return current
+ 
+        try:
+            choice = int(raw) - 1
+        except ValueError:
+            print("Invalid")
+            continue
+ 
         if choice not in range(len(categories)):
             print("Invalid")
             continue
@@ -45,22 +62,23 @@ def add_expense(): #add manual expenses
             continue
         category=category_choice()
         desc=input("Enter the description: ")
-        date=input("Date (YYYY-MM-DD): ")
-        expense=Expense(amount,category,desc,date) #in class object format
+        curr_date=date.today().isoformat()
+        expense=Expense(amount,category,desc,curr_date) #in class object format
         manager.add_append(expense)
-        print(amount,category,desc,date)
+        print(f"{amount}||{category}||{desc}||{curr_date}")
         break # if condition all works, close the loop
     
 
 def list_expense():
-    if not :
+    expenses=manager.list()
+    if not expenses:
         print("No expenses")
         return
-    for i, expense in enumerate(expenses,start=1):
+    for i, expense in enumerate(expenses, start=1):
         print(f"{i}. {expense}")
 
-
 def get_summary():
+    expenses=manager.summary()
     if not expenses:
         print("No expenses")
         return
@@ -80,73 +98,109 @@ def get_summary():
         print(f"{category}: ${total}")
 
 def modify_expense():
-    options=[
-        "Edit",
-        "Remove",
-        "Search",
-        "Sort"
-    ]
-    for i,option in enumerate(options,start=1):
+    expenses:list[Expense] = manager.list() 
+    if not expenses:
+        print("No expenses")
+        return
+ 
+    options = ["Edit", "Remove", "Search", "Sort"]
+    for i, option in enumerate(options, start=1):
         print(f"{i}. {option}")
-    select=int(input("Enter choice: "))-1
-    if(select==0):
-        for i, expense in enumerate(expenses,start=1):
-            print(f"{i}. {expense}")
-        choice=int(input("Enter choice no: "))-1
-        if choice in range (len(expenses))-1:
-            expense=expenses[choice]
-            print("Press Enter to keep the current value")
-            amount=int(input("Enter amount: "))
-            if amount:
-                expense.amount=amount
-                print(f"Changed amount: {amount}")
-            category=category_choice()
-            if category:
-                expense.category=category
-                print(f"Changed category: {category}")
-            desc=input("Enter description: ")
-            if desc:
-                expense.desc=desc
-                print(f"Changed Description: {desc}")
-            date=input("Enter date")
-            if date:
-                expense.date=date
-                print(f"Changed Date: {date}")
-
-    elif(select==1):
-        for i, expense in enumerate(expenses,start=1):
-            print(f"{i}. {expense}")
-        choice=int(input("Enter choice no: "))-1
-        if choice in range (len(expenses))-1:
-                expense.pop(choice)
-        save_expense(expenses)
-
-    elif(select==2):
-        keyword=input("Search by description: ").lower()
-        found=False
-        for expense in expenses:
-            if keyword in expense.desc.lower():
-                print(expense)
-                found=True
-        if not found:
-            print("Not found")
-                
-    elif(select==3):
-        print("1. Amount\n2. Date")
-        choice=int(input("Choice: "))
-        if choice==1:
-            expenses.sort(key=lambda x:x.amount)
-        elif choice==2:
-            expenses.sort(key=lambda x:x.date)
-        else:
-            print("Invalid choice")
-        save_expense(expenses)
-
+    try:
+        select = int(input("Enter choice: ")) - 1
+    except ValueError:
+        print("Invalid choice")
+        return
+ 
+    if select == 0:
+        _edit_expense(expenses)
+    elif select == 1:
+        _remove_expense(expenses)
+    elif select == 2:
+        _search_expense(expenses)
+    elif select == 3:
+        _sort_expense(expenses)
     else:
         print("Invalid choice")
-    
 
-def Exit():
+def _edit_expense(expenses):
+    for i, expense in enumerate(expenses,start=1):
+        print(f"{i}. {expense}")
+    try:
+        choice=int(input("Enter expense to change: "))-1
+    except ValueError:
+        print("Invalid choice")
+        return
+    if not (0<=choice<=len(expenses)):
+        print("Invalid choice")
+        return
+    expense=expenses[choice]
+    print("Press Enter to keep the current value")
+    amount=input("Enter amount: ")
+    if amount.strip():
+        try:
+            expense.amount=float(amount)
+            print(f"Changed amount: {amount}")
+        except ValueError:
+            print("Invalid value, keeping old value")
+
+    category=category_choice(current=expense.category)
+    if category!=expense.category:
+        expense.category=category
+        print(f"Changed category: {category}")
+
+    desc=input("Enter description: ")
+    if desc.strip():
+        expense.desc=desc
+        print(f"Changed description: {desc}")
+
+    date=input("Enter date: ")
+    if date.strip():
+        expense.date=date
+        print(f"Changed date: {date}")
+
+def _remove_expense(expenses):
+    for i, expense in enumerate(expenses,start=1):
+            print(f"{i}. {expense}")
+    try:
+        choice=int(input("Enter expense to change: "))-1
+    except ValueError:
+        print("Invalid choice")
+        return
+    if (0<=choice<len(expenses)):
+        expenses.pop(choice)
+        save_expense(expenses)
+        print("Removed")
+    else:
+        print("Invalid choice")
+        
+def _search_expense(expenses):
+    search=input("Search by description: ").lower()
+    flag=False
+    for expense in expenses:
+        if search in expense.desc.lower():
+            flag= True
+            print(expense)
+    if not flag:
+        print("Not found")
+
+def _sort_expense(expenses):
+    print("1. Amount\n2. Date")
+    try:
+        choice=int(input("Choice: "))
+    except ValueError:
+        print("Invalid Value")
+        return
+    if choice==1:
+        expenses.sort(key=lambda x:x.amount)
+    elif choice==2:
+        expenses.sort(key=lambda x:x.date)
+    else:
+        print("Invalid choice")
+        return 
+    save_expense(expenses)
+
+def exit_program():
     sys.exit()
 
 if __name__=="__main__":
