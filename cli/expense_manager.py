@@ -1,4 +1,4 @@
-from storage import save_expense,load_expense
+from cli.storage import save_expense,load_expense
 
 class ExpenseManager:
     def __init__(self):

@@ -1,6 +1,6 @@
-from expense import Expense
-from expense_manager import ExpenseManager
-from storage import save_expense
+from cli.expense import Expense
+from cli.expense_manager import ExpenseManager
+from cli.storage import save_expense
 from datetime import date
 import sys
 
