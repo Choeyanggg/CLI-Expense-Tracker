@@ -2,13 +2,13 @@ from enum import Enum
 from pydantic import BaseModel,Field,ConfigDict
 import datetime 
 
-class Category(str,Enum):
-    food = "Food"
-    transport = "Transport"
-    shopping = "Shopping"
-    bills = "Bills"
-    entertainment = "Entertainment"
-    other = "Other"
+class Category(str, Enum):
+    food = "food"
+    transport = "transport"
+    shopping = "shopping"
+    bills = "bills"
+    entertainment = "entertainment"
+    other = "other"
 
 class ExpenseIn(BaseModel):
     amount:float=Field(gt=0)
@@ -18,7 +18,7 @@ class ExpenseIn(BaseModel):
 
 class ExpenseUpdate(BaseModel):
     amount:float | None=None
-    category:str | None=None
+    category:Category | None=None
     desc:str | None=None
     date: datetime.date | None=None # type: ignore
 
