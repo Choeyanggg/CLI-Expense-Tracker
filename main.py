@@ -18,6 +18,42 @@ def add_expenses(expense:ExpenseIn,db:Session=Depends(get_db)): #pydantic object
     db.refresh(db_expense)
     return db_expense
 
+@app.get("/expenses", response_model=list[ExpenseOut])
+def sort_expenses(sort_by:str|None=None, db:Session=Depends(get_db)):
+    query=select(Expense)
+    if sort_by=="amount":
+        query=query.order_by(Expense.amount)
+    elif sort_by=="year":
+        query=query.order_by(Expense.date)
+    expenses=db.execute(query).scalars().all()
+    return expenses
+
+@app.get("/expenses/summary")
+def expenses_summary(db:Session=Depends(get_db)):
+    expenses=db.query(Expense).all()
+    if not expenses:
+        return{
+            "count":0,
+            "total":0,
+            "average":0,
+            "by_category":{}
+        }
+    
+    total=sum(expense.amount for expense in expenses)
+    by_category={}
+    for expense in expenses:
+        if expense.category in by_category:
+            by_category[expense.category]+=expense.amount
+        else:
+            by_category[expense.category]=expense.amount
+
+    return{
+        "count": len(expenses),
+        "total": total,
+        "average": total/len(expenses),
+        "by_category":by_category        
+    }
+
 @app.get("/expenses/{expense_id}",response_model=ExpenseOut)
 def search_expense(expense_id:int,db:Session=Depends(get_db)):
     expense=db.get(Expense,expense_id)
@@ -34,12 +70,14 @@ def delete_expense(expense_id:int, db:Session=Depends(get_db)):
     db.commit()
     return {"message": "Expense deleted"}
 
-@app.get("/expenses", response_model=list[ExpenseOut])
-def sort_expenses(sort_by:str|None=None, db:Session=Depends(get_db)):
-    query=select(Expense)
-    if sort_by=="amount":
-        query=query.order_by(Expense.amount)
-    elif sort_by=="year":
-        query=query.order_by(Expense.date)
-    expenses=db.execute(query).scalars().all()
-    return expenses
+@app.patch("/expenses/{expense_id}",response_model=ExpenseOut)
+def modify_expense(expense_id:int,expense:ExpenseUpdate,db:Session=Depends(get_db)):
+    db_expense=db.get(Expense,expense_id)
+    if not db_expense:
+        raise HTTPException(status_code=404, detail="Item not found")
+    update_data=expense.model_dump(exclude_unset=True)
+    for key,value in update_data.items():
+        setattr(db_expense,key,value)
+    db.commit()
+    db.refresh(db_expense)
+    return db_expense
