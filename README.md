@@ -117,9 +117,9 @@ python main.py
 ## Future Roadmap
 
 - [x] JSON-based storage
-- [ ] PostgreSQL integration
+- [x] PostgreSQL integration
 - [ ] ETL pipeline
-- [ ] FastAPI backend
+- [x] FastAPI backend
 - [ ] Docker containerization
 - [ ] Unit testing
 - [ ] CI/CD
