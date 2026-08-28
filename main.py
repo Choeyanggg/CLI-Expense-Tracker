@@ -4,11 +4,15 @@ from sqlalchemy.orm import Session
 from models import Expense
 from schemas import ExpenseIn,ExpenseOut,ExpenseUpdate
 from database import Base,engine,get_db
-
+from routes import auth,user
 
 Base.metadata.create_all(bind=engine)
 
 app=FastAPI()
+
+app.include_router(auth.router)
+app.include_router(user.router)
+
 
 @app.post("/expenses",response_model=ExpenseOut)
 def add_expenses(expense:ExpenseIn,db:Session=Depends(get_db)): #pydantic object for validation
