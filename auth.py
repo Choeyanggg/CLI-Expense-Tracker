@@ -6,10 +6,14 @@ from jose import jwt, JWTError
 from datetime import datetime, timedelta, timezone
 from models import Users
 from database import get_db
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 password_hash=PasswordHash.recommended()
 
-SECRET_KEY="my-secretkey"
+SECRET_KEY=os.getenv("SECRET_KEY")
 ALGORITHM="HS256"
 
 oauth2_scheme=OAuth2PasswordBearer(tokenUrl="login")

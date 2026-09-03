@@ -1,3 +1,4 @@
+from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped,mapped_column
 from database import Base
 from datetime import date
@@ -10,6 +11,7 @@ class Expense(Base):
     category:Mapped[str]
     desc:Mapped[str]
     date:Mapped[date]
+    user_id:Mapped[int]=mapped_column(ForeignKey("users.id"))
 
 class Users(Base):
     __tablename__="user"
